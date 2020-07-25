@@ -1469,14 +1469,19 @@ type MONITORINFO struct {
 }
 
 type (
-	HACCEL    HANDLE
-	HCURSOR   HANDLE
-	HDWP      HANDLE
-	HICON     HANDLE
-	HMENU     HANDLE
-	HMONITOR  HANDLE
+	HACCEL HANDLE
+	HCURSOR HANDLE
+	HDWP HANDLE
+	HICON HANDLE
+	HMENU HANDLE
+	HMONITOR HANDLE
 	HRAWINPUT HANDLE
-	HWND      HANDLE
+	HWND HANDLE
+	DWORD uint32
+	HHOOK HANDLE
+	LRESULT int32
+	HOOKPROC func(int32, uintptr, uintptr) LRESULT
+
 )
 
 type MSG struct {
@@ -1886,6 +1891,12 @@ var (
 	updateWindow                *windows.LazyProc
 	windowFromDC                *windows.LazyProc
 	windowFromPoint             *windows.LazyProc
+	setLayeredWindowAttributes  *windows.LazyProc
+	switchToThisWindow          *windows.LazyProc
+	setWindowsHookExW           *windows.LazyProc
+	getWindowTextW              *windows.LazyProc
+	getWindowTextLengthW        *windows.LazyProc
+	setWindowRgn                *windows.LazyProc
 )
 
 func init() {
@@ -2036,6 +2047,12 @@ func init() {
 	updateWindow = libuser32.NewProc("UpdateWindow")
 	windowFromDC = libuser32.NewProc("WindowFromDC")
 	windowFromPoint = libuser32.NewProc("WindowFromPoint")
+	setLayeredWindowAttributes = libuser32.NewProc("SetLayeredWindowAttributes")
+	switchToThisWindow = libuser32.NewProc("SwitchToThisWindow")
+	setWindowsHookExW = libuser32.NewProc("SetWindowsHookExW")
+	getWindowTextW = libuser32.NewProc("GetWindowTextW")
+	getWindowTextLengthW = libuser32.NewProc("GetWindowTextLengthW")
+	setWindowRgn = libuser32.NewProc("SetWindowRgn")
 }
 
 func AddClipboardFormatListener(hwnd HWND) bool {
@@ -3350,4 +3367,66 @@ func WindowFromPoint(Point POINT) HWND {
 		0)
 
 	return HWND(ret)
+}
+
+func SetLayeredWindowAttributes(hwnd HWND, crKey COLORREF, bAlpha byte, dwFlags uint32) bool {
+	ret, _, _ := syscall.Syscall6(setLayeredWindowAttributes.Addr(), 4,
+		uintptr(hwnd),
+		uintptr(crKey),
+		uintptr(bAlpha),
+		uintptr(dwFlags),
+		0,
+		0)
+
+	return ret != 0
+}
+
+func SwitchToThisWindow(hwnd HWND, fAltTab bool) bool {
+	ret, _, _ := syscall.Syscall(switchToThisWindow.Addr(), 2,
+		uintptr(hwnd),
+		uintptr(BoolToBOOL(fAltTab)),
+		0)
+
+	return ret != 0
+}
+
+func GetWindowTextLengthW(hwnd HWND) int {
+	r1, _, _ := getWindowTextLengthW.Call(
+		uintptr(hwnd))
+
+	return int(r1)
+}
+
+func GetWindowTextW(hwnd HWND) string {
+	textLen := GetWindowTextLengthW(hwnd) + 1
+
+	buf := make([]uint16, textLen)
+	_, _, _ = getWindowTextW.Call(
+		uintptr(hwnd),
+		uintptr(unsafe.Pointer(&buf[0])),
+		uintptr(textLen))
+
+	return syscall.UTF16ToString(buf)
+}
+
+func SetWindowsHookExW(idHook int, lpfn HOOKPROC, hmod HINSTANCE, dwThreadID DWORD) HHOOK {
+
+	ret, _, _ := syscall.Syscall6(setWindowsHookExW.Addr(), 4,
+		uintptr(idHook),
+		windows.NewCallback(lpfn),
+		uintptr(hmod),
+		uintptr(dwThreadID),
+		0,
+		0)
+
+	return HHOOK(ret)
+}
+
+func SetWindowRgn(hwnd HWND, hRgn HRGN, bRedraw bool) int {
+	ret, _, _ := setWindowRgn.Call(
+		uintptr(hwnd),
+		uintptr(hRgn),
+		uintptr(BoolToBOOL(bRedraw)),
+	)
+	return int(ret)
 }
