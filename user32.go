@@ -890,6 +890,32 @@ const (
 )
 
 const (
+	WH_MIN             = -1
+	WH_MSGFILTER       = -1
+	WH_JOURNALRECORD   = 0
+	WH_JOURNALPLAYBACK = 1
+	WH_KEYBOARD        = 2
+	WH_GETMESSAGE      = 3
+	WH_CALLWNDPROC     = 4
+	WH_CBT             = 5
+	WH_SYSMSGFILTER    = 6
+	WH_MOUSE           = 7
+	WH_HARDWARE        = 8
+	WH_DEBUG           = 9
+	WH_SHELL           = 10
+	WH_FOREGROUNDIDLE  = 11
+	WH_CALLWNDPROCRET  = 12
+
+	WH_KEYBOARD_LL = 13
+	WH_MOUSE_LL    = 14
+
+	WH_MAX = 14
+
+	WH_MINHOOK = WH_MIN
+	WH_MAXHOOK = WH_MAX
+)
+
+const (
 	CHILDID_SELF      = 0
 	INDEXID_OBJECT    = 0
 	INDEXID_CONTAINER = 0
@@ -1795,6 +1821,7 @@ var (
 	endPaint                    *windows.LazyProc
 	enumChildWindows            *windows.LazyProc
 	findWindow                  *windows.LazyProc
+	findWindowEx                *windows.LazyProc
 	getActiveWindow             *windows.LazyProc
 	getAncestor                 *windows.LazyProc
 	getCaretPos                 *windows.LazyProc
@@ -1941,6 +1968,7 @@ func init() {
 	endPaint = libuser32.NewProc("EndPaint")
 	enumChildWindows = libuser32.NewProc("EnumChildWindows")
 	findWindow = libuser32.NewProc("FindWindowW")
+	findWindowEx = libuser32.NewProc("FindWindowExW")
 	getActiveWindow = libuser32.NewProc("GetActiveWindow")
 	getAncestor = libuser32.NewProc("GetAncestor")
 	getCaretPos = libuser32.NewProc("GetCaretPos")
@@ -2419,6 +2447,18 @@ func FindWindow(lpClassName, lpWindowName *uint16) HWND {
 	ret, _, _ := syscall.Syscall(findWindow.Addr(), 2,
 		uintptr(unsafe.Pointer(lpClassName)),
 		uintptr(unsafe.Pointer(lpWindowName)),
+		0)
+
+	return HWND(ret)
+}
+
+func FindWindowEx(hWndParent HWND, hWndChild HWND, lpClassName, lpWindowName *uint16) HWND {
+	ret, _, _ := syscall.Syscall6(findWindowEx.Addr(), 4,
+		uintptr(hWndParent),
+		uintptr(hWndChild),
+		uintptr(unsafe.Pointer(lpClassName)),
+		uintptr(unsafe.Pointer(lpWindowName)),
+		0,
 		0)
 
 	return HWND(ret)
