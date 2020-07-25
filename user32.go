@@ -1505,8 +1505,8 @@ type (
 	HWND HANDLE
 	DWORD uint32
 	HHOOK HANDLE
-	LRESULT int32
-	HOOKPROC func(int32, uintptr, uintptr) LRESULT
+	LRESULT int
+	HOOKPROC func(nCode int, wParam uintptr, lParam uintptr) LRESULT
 
 )
 
