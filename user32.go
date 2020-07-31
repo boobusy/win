@@ -1507,8 +1507,15 @@ type (
 	HHOOK HANDLE
 	LRESULT int
 	HOOKPROC func(nCode int, wParam uintptr, lParam uintptr) LRESULT
-
 )
+
+type KBDLLHOOKSTRUCT struct {
+	VkCode      uint32
+	ScanCode    uint32
+	Flags       uint32
+	Time        uint32
+	DwExtraInfo uintptr
+}
 
 type MSG struct {
 	HWnd    HWND
@@ -1921,6 +1928,7 @@ var (
 	setLayeredWindowAttributes  *windows.LazyProc
 	switchToThisWindow          *windows.LazyProc
 	setWindowsHookExW           *windows.LazyProc
+	unhookWindowsHookEx         *windows.LazyProc
 	getWindowTextW              *windows.LazyProc
 	getWindowTextLengthW        *windows.LazyProc
 	setWindowRgn                *windows.LazyProc
@@ -2078,6 +2086,7 @@ func init() {
 	setLayeredWindowAttributes = libuser32.NewProc("SetLayeredWindowAttributes")
 	switchToThisWindow = libuser32.NewProc("SwitchToThisWindow")
 	setWindowsHookExW = libuser32.NewProc("SetWindowsHookExW")
+	unhookWindowsHookEx = libuser32.NewProc("unhookWindowsHookEx")
 	getWindowTextW = libuser32.NewProc("GetWindowTextW")
 	getWindowTextLengthW = libuser32.NewProc("GetWindowTextLengthW")
 	setWindowRgn = libuser32.NewProc("SetWindowRgn")
@@ -3460,6 +3469,11 @@ func SetWindowsHookExW(idHook int, lpfn HOOKPROC, hmod HINSTANCE, dwThreadID DWO
 		0)
 
 	return HHOOK(ret)
+}
+
+func UnhookWindowsHookEx(hhk HHOOK) bool {
+	ret, _, _ := unhookWindowsHookEx.Call(uintptr(hhk))
+	return ret != 0
 }
 
 func SetWindowRgn(hwnd HWND, hRgn HRGN, bRedraw bool) int {
