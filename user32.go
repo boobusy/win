@@ -1933,6 +1933,8 @@ var (
 	getWindowTextLengthW        *windows.LazyProc
 	setWindowRgn                *windows.LazyProc
 	callNextHookEx              *windows.LazyProc
+	getAsyncKeyState            *windows.LazyProc
+	getKeyboardState            *windows.LazyProc
 )
 
 func init() {
@@ -2092,6 +2094,8 @@ func init() {
 	getWindowTextLengthW = libuser32.NewProc("GetWindowTextLengthW")
 	setWindowRgn = libuser32.NewProc("SetWindowRgn")
 	callNextHookEx = libuser32.NewProc("CallNextHookEx")
+	getAsyncKeyState = libuser32.NewProc("GetAsyncKeyState")
+	getKeyboardState = libuser32.NewProc("GetKeyboardState")
 }
 
 func AddClipboardFormatListener(hwnd HWND) bool {
@@ -3478,7 +3482,6 @@ func UnhookWindowsHookEx(hhk HHOOK) bool {
 	return ret != 0
 }
 
-
 func CallNextHookEx(hhk HHOOK, nCode int, wParam, lParam uintptr) LRESULT {
 	r1, _, _ := callNextHookEx.Call(
 		uintptr(hhk),
@@ -3489,7 +3492,6 @@ func CallNextHookEx(hhk HHOOK, nCode int, wParam, lParam uintptr) LRESULT {
 	return LRESULT(r1)
 }
 
-
 func SetWindowRgn(hwnd HWND, hRgn HRGN, bRedraw bool) int {
 	ret, _, _ := setWindowRgn.Call(
 		uintptr(hwnd),
@@ -3497,4 +3499,15 @@ func SetWindowRgn(hwnd HWND, hRgn HRGN, bRedraw bool) int {
 		uintptr(BoolToBOOL(bRedraw)),
 	)
 	return int(ret)
+}
+
+func GetKeyboardState(lpKeyState *[]byte) bool {
+	r1, _, _ := getKeyboardState.Call(
+		uintptr(unsafe.Pointer(&(*lpKeyState)[0])))
+	return r1 != 0
+}
+
+func GetAsyncKeyState(vKey int) uint16 {
+	r1, _, _ := getAsyncKeyState.Call(uintptr(vKey))
+	return uint16(r1)
 }
