@@ -1932,6 +1932,7 @@ var (
 	getWindowTextW              *windows.LazyProc
 	getWindowTextLengthW        *windows.LazyProc
 	setWindowRgn                *windows.LazyProc
+	callNextHookEx              *windows.LazyProc
 )
 
 func init() {
@@ -2090,6 +2091,7 @@ func init() {
 	getWindowTextW = libuser32.NewProc("GetWindowTextW")
 	getWindowTextLengthW = libuser32.NewProc("GetWindowTextLengthW")
 	setWindowRgn = libuser32.NewProc("SetWindowRgn")
+	callNextHookEx = libuser32.NewProc("CallNextHookEx")
 }
 
 func AddClipboardFormatListener(hwnd HWND) bool {
@@ -3475,6 +3477,18 @@ func UnhookWindowsHookEx(hhk HHOOK) bool {
 	ret, _, _ := unhookWindowsHookEx.Call(uintptr(hhk))
 	return ret != 0
 }
+
+
+func CallNextHookEx(hhk HHOOK, nCode int, wParam, lParam uintptr) LRESULT {
+	r1, _, _ := callNextHookEx.Call(
+		uintptr(hhk),
+		uintptr(nCode),
+		uintptr(wParam),
+		uintptr(lParam),
+	)
+	return LRESULT(r1)
+}
+
 
 func SetWindowRgn(hwnd HWND, hRgn HRGN, bRedraw bool) int {
 	ret, _, _ := setWindowRgn.Call(
