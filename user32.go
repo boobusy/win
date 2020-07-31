@@ -2086,7 +2086,7 @@ func init() {
 	setLayeredWindowAttributes = libuser32.NewProc("SetLayeredWindowAttributes")
 	switchToThisWindow = libuser32.NewProc("SwitchToThisWindow")
 	setWindowsHookExW = libuser32.NewProc("SetWindowsHookExW")
-	unhookWindowsHookEx = libuser32.NewProc("unhookWindowsHookEx")
+	unhookWindowsHookEx = libuser32.NewProc("UnhookWindowsHookEx")
 	getWindowTextW = libuser32.NewProc("GetWindowTextW")
 	getWindowTextLengthW = libuser32.NewProc("GetWindowTextLengthW")
 	setWindowRgn = libuser32.NewProc("SetWindowRgn")
